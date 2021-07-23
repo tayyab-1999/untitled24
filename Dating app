@@ -1,1 +1,51 @@
 
+const mysql = require('mysql');
+const dbName     = 'User';
+
+const connection = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password:'',
+    port: 8080
+});
+
+// node native promisify
+connection.connect(function (err) {
+    // If not have connection
+    if (err) throw err;
+
+    // Create database if not exist
+    connection.query('CREATE DATABASE IF NOT EXISTS ' + dbName);
+
+    connection.changeUser({database: dbName}, function (err) {
+        if (err) throw err;
+    });
+
+    console.log("Connected!");
+});
+
+const pool = mysql.createPool({
+    connectionLimit: 10,
+    host: 'localhost',
+    user: 'root',
+    password: '',
+    port: 8080,
+    database: dbName
+})
+
+pool.getConnection((err, connection) => {
+    if (err) {
+        if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+            console.log('Database connection was closed.')
+        }
+        if (err.code === 'ER_CON_COUNT_ERROR') {
+            console.log('Database has too many connections.')
+        }
+        if (err.code === 'ECONNREFUSED') {
+            console.log('Database connection was refused.')
+        }
+    }
+    if (connection) connection.release()
+    return false;
+})
+
